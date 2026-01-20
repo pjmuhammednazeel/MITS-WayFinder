@@ -23,6 +23,14 @@ const AdminDashboard = () => {
     window.location.href = '/admin-dashboard/manage-buildings';
   };
 
+  const openManageFloors = () => {
+    window.location.href = '/admin-dashboard/manage-floors';
+  };
+
+  const openManageRooms = () => {
+    window.location.href = '/admin-dashboard/manage-rooms';
+  };
+
   if (!adminUser) return null;
 
   return (
@@ -48,16 +56,16 @@ const AdminDashboard = () => {
 
           <div className="feature-card">
             <div className="icon-pill">[]</div>
-            <h3>Routes & Paths</h3>
-            <p>Configure walking paths, shuttle routes, and navigation preferences.</p>
-            <button className="secondary-button">Manage Routes</button>
+            <h3>Manage Floors</h3>
+            <p>Add and organize floors for each building in the campus.</p>
+            <button className="secondary-button" onClick={openManageFloors}>View Floors</button>
           </div>
 
           <div className="feature-card">
             <div className="icon-pill">-></div>
-            <h3>System Settings</h3>
-            <p>Update map settings, notifications, and system configurations.</p>
-            <button className="secondary-button">Open Settings</button>
+            <h3>Manage Rooms</h3>
+            <p>Add and organize rooms within each floor and building.</p>
+            <button className="secondary-button" onClick={openManageRooms}>View Rooms</button>
           </div>
 
           <div className="feature-card">

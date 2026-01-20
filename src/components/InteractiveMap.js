@@ -84,6 +84,8 @@ const InteractiveMap = ({ onClose }) => {
   const [userLocation, setUserLocation] = useState(null);
   const [locationError, setLocationError] = useState(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filteredLocations, setFilteredLocations] = useState([]);
   const mapRef = useRef();
 
   // Muthoot Institute of Technology & Science - Real campus locations
@@ -264,6 +266,21 @@ const InteractiveMap = ({ onClose }) => {
     );
   };
 
+  // Filter locations based on search query
+  useEffect(() => {
+    if (searchQuery.trim() === '') {
+      setFilteredLocations(campusLocations);
+    } else {
+      const query = searchQuery.toLowerCase();
+      const filtered = campusLocations.filter(location => 
+        location.name.toLowerCase().includes(query) ||
+        location.description.toLowerCase().includes(query) ||
+        location.type.toLowerCase().includes(query)
+      );
+      setFilteredLocations(filtered);
+    }
+  }, [searchQuery]);
+
   // Watch user location for continuous updates
   useEffect(() => {
     let watchId;
@@ -304,6 +321,18 @@ const InteractiveMap = ({ onClose }) => {
         <div className="map-title">
           <MapPin className="title-icon" />
           <h2>Muthoot Institute of Technology & Science</h2>
+        </div>
+        <div className="search-bar-container">
+          <input
+            type="text"
+            className="search-input"
+            placeholder="Search buildings, cafeteria, hostels..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+          <button className="search-btn" onClick={() => setSearchQuery(searchQuery)}>
+            Search
+          </button>
         </div>
         <div className="map-controls">
           <button 
@@ -370,6 +399,29 @@ const InteractiveMap = ({ onClose }) => {
           </Marker>
         )}
 
+        {/* Campus location markers - filtered by search */}
+        {filteredLocations.map((location) => (
+          <Marker
+            key={location.id}
+            position={location.position}
+            icon={createCampusIcon(location.color, location.type)}
+          >
+            <Popup>
+              <div className="location-popup">
+                <h4>{location.name}</h4>
+                <p>{location.description}</p>
+                <div className="facilities-list">
+                  <strong>Facilities:</strong>
+                  <ul>
+                    {location.facilities.map((facility, idx) => (
+                      <li key={idx}>{facility}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </Popup>
+          </Marker>
+        ))}
 
       </MapContainer>
 
