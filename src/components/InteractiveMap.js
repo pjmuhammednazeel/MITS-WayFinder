@@ -12,8 +12,7 @@ import {
   Car, 
   Users,
   Wifi,
-  AlertCircle,
-  ArrowLeft
+  AlertCircle
 } from 'lucide-react';
 import './InteractiveMap.css';
 
@@ -307,14 +306,6 @@ const InteractiveMap = ({ onClose }) => {
           <h2>Muthoot Institute of Technology & Science</h2>
         </div>
         <div className="map-controls">
-          <button 
-            className="location-btn"
-            onClick={() => onClose && onClose()}
-            disabled={!onClose}
-          >
-            <ArrowLeft className="btn-icon" />
-            Back
-          </button>
           <button 
             className={`location-btn ${isLoadingLocation ? 'loading' : ''}`}
             onClick={getUserLocation}
