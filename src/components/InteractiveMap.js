@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import { 
@@ -103,6 +103,7 @@ const InteractiveMap = ({ onClose }) => {
   const [searchResults, setSearchResults] = useState([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState(null);
+  const [pathCoordinates, setPathCoordinates] = useState([]);
   const mapRef = useRef();
 
   // Fetch rooms from database
@@ -178,7 +179,7 @@ const InteractiveMap = ({ onClose }) => {
   };
 
   // Handle clicking on a room search result
-  const handleRoomClick = (room) => {
+  const handleRoomClick = async (room) => {
     console.log('Room clicked:', room);
     const building = room.floor?.building;
     if (!building) {
@@ -203,6 +204,39 @@ const InteractiveMap = ({ onClose }) => {
         position: [lat, lng],
         roomInfo: room
       });
+
+      // Create path from user location to building (if user location exists)
+      if (userLocation) {
+        // Fetch route from OSRM
+        try {
+          const response = await fetch(
+            `https://router.project-osrm.org/route/v1/foot/${userLocation.lng},${userLocation.lat};${lng},${lat}?overview=full&geometries=geojson`
+          );
+          const data = await response.json();
+          
+          if (data.code === 'Ok' && data.routes && data.routes[0]) {
+            const route = data.routes[0].geometry.coordinates;
+            // Convert [lng, lat] to [lat, lng] for Leaflet
+            const routeCoords = route.map(coord => [coord[1], coord[0]]);
+            setPathCoordinates(routeCoords);
+          } else {
+            // Fallback to straight line if routing fails
+            setPathCoordinates([
+              [userLocation.lat, userLocation.lng],
+              [lat, lng]
+            ]);
+          }
+        } catch (error) {
+          console.error('Routing error:', error);
+          // Fallback to straight line
+          setPathCoordinates([
+            [userLocation.lat, userLocation.lng],
+            [lat, lng]
+          ]);
+        }
+      } else {
+        setPathCoordinates([]);
+      }
     } else {
       console.log('Missing coordinates or map reference');
     }
@@ -586,6 +620,24 @@ const InteractiveMap = ({ onClose }) => {
               </div>
             </Popup>
           </Marker>
+        )}
+
+        {/* Path from user location to selected building */}
+        {pathCoordinates.length > 0 && (
+          <>
+            <Polyline
+              positions={pathCoordinates}
+              color="#0066cc"
+              weight={6}
+              opacity={0.6}
+            />
+            <Polyline
+              positions={pathCoordinates}
+              color="#4de2c1"
+              weight={4}
+              opacity={1}
+            />
+          </>
         )}
 
         {/* Campus location markers - filtered by search */}
