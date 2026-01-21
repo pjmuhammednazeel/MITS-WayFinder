@@ -12,8 +12,10 @@ import {
   Car, 
   Users,
   Wifi,
-  AlertCircle
+  AlertCircle,
+  Search
 } from 'lucide-react';
+import { supabase } from '../lib/supabaseClient';
 import './InteractiveMap.css';
 
 // Fix for default markers
@@ -80,13 +82,131 @@ const MapController = ({ userLocation }) => {
   return null;
 };
 
+// Component to set map reference
+const MapRefSetter = ({ mapRef }) => {
+  const map = useMap();
+  
+  useEffect(() => {
+    mapRef.current = map;
+  }, [map, mapRef]);
+  
+  return null;
+};
+
 const InteractiveMap = ({ onClose }) => {
   const [userLocation, setUserLocation] = useState(null);
   const [locationError, setLocationError] = useState(null);
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredLocations, setFilteredLocations] = useState([]);
+  const [rooms, setRooms] = useState([]);
+  const [searchResults, setSearchResults] = useState([]);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  const [selectedLocation, setSelectedLocation] = useState(null);
   const mapRef = useRef();
+
+  // Fetch rooms from database
+  useEffect(() => {
+    fetchRooms();
+  }, []);
+
+  const fetchRooms = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('rooms')
+        .select(`
+          room_id,
+          room_name,
+          room_number::text,
+          floor:floor_id (
+            floor_id,
+            floor_name,
+            building:building_id (
+              building_id,
+              building_name,
+              latitude,
+              longitude
+            )
+          )
+        `);
+      
+      if (error) {
+        console.error('Error fetching rooms:', error);
+      } else {
+        console.log('Fetched rooms:', data);
+        setRooms(data || []);
+      }
+    } catch (err) {
+      console.error('Error:', err);
+    }
+  };
+
+  // Handle room search
+  const handleRoomSearch = () => {
+    if (!searchQuery.trim()) {
+      setShowSearchResults(false);
+      setSearchResults([]);
+      return;
+    }
+
+    const query = searchQuery.toLowerCase().trim();
+    console.log('Searching for:', query);
+    console.log('Available rooms:', rooms);
+    
+    const results = rooms.filter(room => {
+      const roomName = (room.room_name || '').toLowerCase();
+      const roomNumber = (room.room_number || '').toLowerCase();
+      const matches = roomName.includes(query) || roomNumber.includes(query);
+      
+      if (matches) {
+        console.log('Match found:', room);
+      }
+      
+      return matches;
+    });
+
+    console.log('Search results:', results);
+    setSearchResults(results);
+    setShowSearchResults(true);
+  };
+
+  // Handle Enter key in search input
+  const handleSearchKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      handleRoomSearch();
+    }
+  };
+
+  // Handle clicking on a room search result
+  const handleRoomClick = (room) => {
+    console.log('Room clicked:', room);
+    const building = room.floor?.building;
+    if (!building) {
+      console.log('No building data found');
+      return;
+    }
+
+    console.log('Building:', building);
+    const lat = parseFloat(building.latitude);
+    const lng = parseFloat(building.longitude);
+    
+    console.log('Coordinates:', lat, lng);
+    console.log('Map ref:', mapRef.current);
+
+    if (lat && lng && mapRef.current) {
+      console.log('Setting map view to:', [lat, lng]);
+      mapRef.current.setView([lat, lng], 18);
+      
+      // Set selected location for marker highlight
+      setSelectedLocation({
+        name: building.building_name,
+        position: [lat, lng],
+        roomInfo: room
+      });
+    } else {
+      console.log('Missing coordinates or map reference');
+    }
+  };
 
   // Muthoot Institute of Technology & Science - Real campus locations
   const campusLocations = [
@@ -326,11 +446,13 @@ const InteractiveMap = ({ onClose }) => {
           <input
             type="text"
             className="search-input"
-            placeholder="Search buildings, cafeteria, hostels..."
+            placeholder="Search by room name or room number..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+            onKeyPress={handleSearchKeyPress}
           />
-          <button className="search-btn" onClick={() => setSearchQuery(searchQuery)}>
+          <button className="search-btn" onClick={handleRoomSearch}>
+            <Search className="btn-icon" style={{ width: '18px', height: '18px', marginRight: '5px' }} />
             Search
           </button>
         </div>
@@ -350,6 +472,47 @@ const InteractiveMap = ({ onClose }) => {
         <div className="error-banner">
           <AlertCircle className="error-icon" />
           <span>{locationError}</span>
+        </div>
+      )}
+
+      {/* Search Results Panel */}
+      {showSearchResults && (
+        <div className="search-results-panel">
+          <div className="search-results-header">
+            <h3>Search Results ({searchResults.length})</h3>
+            <button 
+              className="close-results-btn" 
+              onClick={() => setShowSearchResults(false)}
+            >
+              ×
+            </button>
+          </div>
+          <div className="search-results-list">
+            {searchResults.length > 0 ? (
+              searchResults.map((room) => (
+                <div 
+                  key={room.room_id} 
+                  className="search-result-item"
+                  onClick={() => handleRoomClick(room)}
+                >
+                  <div className="result-header">
+                    <h4>{room.room_name}</h4>
+                    <span className="room-number-badge">{room.room_number}</span>
+                  </div>
+                  <div className="result-details">
+                    <p><strong>Building:</strong> {room.floor?.building?.building_name || 'N/A'}</p>
+                    <p><strong>Floor:</strong> {room.floor?.floor_name || 'N/A'}</p>
+                    <p className="click-hint">📍 Click to view on map</p>
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="no-results">
+                <Search className="no-results-icon" />
+                <p>No rooms found matching "{searchQuery}"</p>
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -374,13 +537,13 @@ const InteractiveMap = ({ onClose }) => {
         center={mapCenter}
         zoom={userLocation ? 17 : 16}
         className="leaflet-map"
-        ref={mapRef}
       >
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
         
+        <MapRefSetter mapRef={mapRef} />
         <MapController userLocation={userLocation} />
 
         {/* User location marker */}
@@ -394,6 +557,32 @@ const InteractiveMap = ({ onClose }) => {
                 <h4>Your Location</h4>
                 <p>Coordinates: {userLocation.lat.toFixed(6)}, {userLocation.lng.toFixed(6)}</p>
                 <p>Accuracy: ±{Math.round(userLocation.accuracy)} meters</p>
+              </div>
+            </Popup>
+          </Marker>
+        )}
+
+        {/* Selected building marker from search */}
+        {selectedLocation && selectedLocation.position && (
+          <Marker
+            position={selectedLocation.position}
+          >
+            <Popup>
+              <div className="location-popup">
+                <h4>{selectedLocation.name}</h4>
+                {selectedLocation.roomInfo && (
+                  <div style={{ marginTop: '10px', padding: '10px', background: 'rgba(77, 226, 193, 0.1)', borderRadius: '8px' }}>
+                    <p style={{ margin: '5px 0', fontWeight: 'bold', color: '#4de2c1' }}>
+                      Room: {selectedLocation.roomInfo.room_name}
+                    </p>
+                    <p style={{ margin: '5px 0' }}>
+                      Room Number: {selectedLocation.roomInfo.room_number}
+                    </p>
+                    <p style={{ margin: '5px 0' }}>
+                      Floor: {selectedLocation.roomInfo.floor?.floor_name}
+                    </p>
+                  </div>
+                )}
               </div>
             </Popup>
           </Marker>
