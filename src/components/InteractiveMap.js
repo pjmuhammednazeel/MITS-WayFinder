@@ -571,6 +571,25 @@ const InteractiveMap = ({ onClose }) => {
         </div>
       </div>
 
+      {/* Indoor Map Banner — M George Block */}
+      <div className="indoor-map-banner">
+        <div className="indoor-map-info">
+          <span className="indoor-map-icon">🏢</span>
+          <div>
+            <div className="indoor-map-title">M George Block — Indoor Map</div>
+            <div className="indoor-map-sub">Navigate inside the building room by room</div>
+          </div>
+        </div>
+        <a
+          href="https://app.mappedin.com/map/699db68b8554b1000b544212"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="indoor-map-btn"
+        >
+          Open Indoor Map ↗
+        </a>
+      </div>
+
       <MapContainer
         center={mapCenter}
         zoom={userLocation ? 17 : 16}

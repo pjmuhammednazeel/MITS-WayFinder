@@ -63,6 +63,14 @@ const Homepage = () => {
             </p>
             <div className="hero-actions">
               <button className="primary-button" onClick={openMapPage}>Open interactive map</button>
+              <a
+                className="tour-button"
+                href="https://pjmuhammednazeel.github.io/Mits_360/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                🔮 360° Campus Tour
+              </a>
               <a className="text-link" href="#about">How it works</a>
             </div>
             <div className="hero-stats">
