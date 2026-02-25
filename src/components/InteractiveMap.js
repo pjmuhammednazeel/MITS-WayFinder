@@ -18,7 +18,16 @@ import {
 import { supabase } from '../lib/supabaseClient';
 import './InteractiveMap.css';
 
-// User location marker — blue pulsing dot
+// Fix Leaflet default marker icons broken by webpack in production builds
+// Without this, Leaflet falls back to showing default blue pin icons
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: require('leaflet/dist/images/marker-icon-2x.png'),
+  iconUrl: require('leaflet/dist/images/marker-icon.png'),
+  shadowUrl: '', // no shadow
+});
+
+
 const userLocationIcon = L.divIcon({
   className: 'user-location-icon',
   html: `<div class="user-marker">
