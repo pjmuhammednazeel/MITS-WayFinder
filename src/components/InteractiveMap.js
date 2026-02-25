@@ -2,14 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap, Polyline } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
-import { 
-  MapPin, 
-  Navigation, 
-  Crosshair, 
-  Building2, 
-  Coffee, 
-  Book, 
-  Car, 
+import {
+  MapPin,
+  Navigation,
+  Crosshair,
+  Building2,
+  Coffee,
+  Book,
+  Car,
   Users,
   Wifi,
   AlertCircle,
@@ -18,15 +18,7 @@ import {
 import { supabase } from '../lib/supabaseClient';
 import './InteractiveMap.css';
 
-// Fix for default markers
-delete L.Icon.Default.prototype._getIconUrl;
-L.Icon.Default.mergeOptions({
-  iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-icon-2x.png',
-  iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-icon.png',
-  shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
-});
-
-// Custom icons
+// User location marker — blue pulsing dot
 const userLocationIcon = L.divIcon({
   className: 'user-location-icon',
   html: `<div class="user-marker">
@@ -37,59 +29,62 @@ const userLocationIcon = L.divIcon({
   iconAnchor: [10, 10]
 });
 
-const createCampusIcon = (color = '#D32F2F', iconType = 'building') => {
-  const iconMap = {
-    building: '🏢',
-    library: '📚',
-    cafeteria: '🍽️',
-    parking: '🅿️',
-    admin: '🏛️',
-    sports: '⚽',
-    hostel: '🏠'
-  };
+// Destination marker — teal pulsing dot with label
+const createDestinationIcon = (label = '') => L.divIcon({
+  className: 'campus-marker',
+  html: `<div style="position:relative;display:flex;flex-direction:column;align-items:center;">
+    <div style="
+      background:#4de2c1;
+      border-radius:50%;
+      width:22px;
+      height:22px;
+      border:3px solid white;
+      box-shadow:0 0 0 5px rgba(77,226,193,0.3), 0 3px 12px rgba(0,0,0,0.3);
+      animation:dest-pulse 2s infinite;
+    "></div>
+    ${label ? `<div style="
+      margin-top:6px;
+      background:rgba(11,18,36,0.92);
+      color:#4de2c1;
+      font-family:'Space Grotesk',sans-serif;
+      font-size:11px;
+      font-weight:700;
+      padding:3px 8px;
+      border-radius:6px;
+      border:1px solid rgba(77,226,193,0.4);
+      white-space:nowrap;
+      max-width:140px;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    ">${label}</div>` : ''}
+  </div>`,
+  iconSize: [22, 22],
+  iconAnchor: [11, 11],
+  popupAnchor: [0, -16]
+});
 
-  return L.divIcon({
-    className: 'campus-marker',
-    html: `<div style="
-      background: ${color};
-      color: white;
-      border-radius: 50%;
-      width: 30px;
-      height: 30px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 16px;
-      border: 3px solid white;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-    ">${iconMap[iconType] || '🏢'}</div>`,
-    iconSize: [30, 30],
-    iconAnchor: [15, 15],
-    popupAnchor: [0, -15]
-  });
-};
 
 // Component to handle map centering when user location changes
 const MapController = ({ userLocation }) => {
   const map = useMap();
-  
+
   useEffect(() => {
     if (userLocation) {
       map.setView([userLocation.lat, userLocation.lng], 16);
     }
   }, [map, userLocation]);
-  
+
   return null;
 };
 
 // Component to set map reference
 const MapRefSetter = ({ mapRef }) => {
   const map = useMap();
-  
+
   useEffect(() => {
     mapRef.current = map;
   }, [map, mapRef]);
-  
+
   return null;
 };
 
@@ -130,7 +125,7 @@ const InteractiveMap = ({ onClose }) => {
             )
           )
         `);
-      
+
       if (error) {
         console.error('Error fetching rooms:', error);
       } else {
@@ -153,16 +148,16 @@ const InteractiveMap = ({ onClose }) => {
     const query = searchQuery.toLowerCase().trim();
     console.log('Searching for:', query);
     console.log('Available rooms:', rooms);
-    
+
     const results = rooms.filter(room => {
       const roomName = (room.room_name || '').toLowerCase();
       const roomNumber = (room.room_number || '').toLowerCase();
       const matches = roomName.includes(query) || roomNumber.includes(query);
-      
+
       if (matches) {
         console.log('Match found:', room);
       }
-      
+
       return matches;
     });
 
@@ -190,14 +185,14 @@ const InteractiveMap = ({ onClose }) => {
     console.log('Building:', building);
     const lat = parseFloat(building.latitude);
     const lng = parseFloat(building.longitude);
-    
+
     console.log('Coordinates:', lat, lng);
     console.log('Map ref:', mapRef.current);
 
     if (lat && lng && mapRef.current) {
       console.log('Setting map view to:', [lat, lng]);
       mapRef.current.setView([lat, lng], 18);
-      
+
       // Set selected location for marker highlight
       setSelectedLocation({
         name: building.building_name,
@@ -213,7 +208,7 @@ const InteractiveMap = ({ onClose }) => {
             `https://router.project-osrm.org/route/v1/foot/${userLocation.lng},${userLocation.lat};${lng},${lat}?overview=full&geometries=geojson`
           );
           const data = await response.json();
-          
+
           if (data.code === 'Ok' && data.routes && data.routes[0]) {
             const route = data.routes[0].geometry.coordinates;
             // Convert [lng, lat] to [lat, lng] for Leaflet
@@ -300,7 +295,7 @@ const InteractiveMap = ({ onClose }) => {
     },
     {
       id: 7,
-      name: "Sachin Tendulkar Arena", 
+      name: "Sachin Tendulkar Arena",
       position: [9.963500, 76.408800],
       type: "sports",
       color: "#FFA726",
@@ -311,7 +306,7 @@ const InteractiveMap = ({ onClose }) => {
       id: 8,
       name: "Cricket Net",
       position: [9.963600, 76.408600],
-      type: "sports", 
+      type: "sports",
       color: "#FFCC02",
       description: "Cricket practice nets for training",
       facilities: ["Practice Nets", "Batting Cages", "Equipment Storage"]
@@ -336,7 +331,7 @@ const InteractiveMap = ({ onClose }) => {
     },
     {
       id: 11,
-      name: "MITS Girls Hostel", 
+      name: "MITS Girls Hostel",
       position: [9.963300, 76.409200],
       type: "hostel",
       color: "#E91E63",
@@ -426,7 +421,7 @@ const InteractiveMap = ({ onClose }) => {
       setFilteredLocations(campusLocations);
     } else {
       const query = searchQuery.toLowerCase();
-      const filtered = campusLocations.filter(location => 
+      const filtered = campusLocations.filter(location =>
         location.name.toLowerCase().includes(query) ||
         location.description.toLowerCase().includes(query) ||
         location.type.toLowerCase().includes(query)
@@ -438,7 +433,7 @@ const InteractiveMap = ({ onClose }) => {
   // Watch user location for continuous updates
   useEffect(() => {
     let watchId;
-    
+
     if (navigator.geolocation) {
       watchId = navigator.geolocation.watchPosition(
         (position) => {
@@ -491,7 +486,7 @@ const InteractiveMap = ({ onClose }) => {
           </button>
         </div>
         <div className="map-controls">
-          <button 
+          <button
             className={`location-btn ${isLoadingLocation ? 'loading' : ''}`}
             onClick={getUserLocation}
             disabled={isLoadingLocation}
@@ -514,8 +509,8 @@ const InteractiveMap = ({ onClose }) => {
         <div className="search-results-panel">
           <div className="search-results-header">
             <h3>Search Results ({searchResults.length})</h3>
-            <button 
-              className="close-results-btn" 
+            <button
+              className="close-results-btn"
               onClick={() => setShowSearchResults(false)}
             >
               ×
@@ -524,8 +519,8 @@ const InteractiveMap = ({ onClose }) => {
           <div className="search-results-list">
             {searchResults.length > 0 ? (
               searchResults.map((room) => (
-                <div 
-                  key={room.room_id} 
+                <div
+                  key={room.room_id}
                   className="search-result-item"
                   onClick={() => handleRoomClick(room)}
                 >
@@ -576,11 +571,11 @@ const InteractiveMap = ({ onClose }) => {
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
-        
+
         <MapRefSetter mapRef={mapRef} />
         <MapController userLocation={userLocation} />
 
-        {/* User location marker */}
+        {/* User location marker — shown after tapping My Location */}
         {userLocation && (
           <Marker
             position={[userLocation.lat, userLocation.lng]}
@@ -588,34 +583,30 @@ const InteractiveMap = ({ onClose }) => {
           >
             <Popup>
               <div className="user-popup">
-                <h4>Your Location</h4>
-                <p>Coordinates: {userLocation.lat.toFixed(6)}, {userLocation.lng.toFixed(6)}</p>
-                <p>Accuracy: ±{Math.round(userLocation.accuracy)} meters</p>
+                <h4>📍 Your Location</h4>
+                <p>Lat: {userLocation.lat.toFixed(6)}</p>
+                <p>Lng: {userLocation.lng.toFixed(6)}</p>
+                <p>Accuracy: ±{Math.round(userLocation.accuracy)}m</p>
               </div>
             </Popup>
           </Marker>
         )}
 
-        {/* Selected building marker from search */}
+        {/* Destination building marker — shown only after a room search */}
         {selectedLocation && selectedLocation.position && (
           <Marker
             position={selectedLocation.position}
+            icon={createDestinationIcon(selectedLocation.name)}
           >
             <Popup>
-              <div className="location-popup">
-                <h4>{selectedLocation.name}</h4>
+              <div className="campus-popup">
+                <h3>{selectedLocation.name}</h3>
                 {selectedLocation.roomInfo && (
-                  <div style={{ marginTop: '10px', padding: '10px', background: 'rgba(77, 226, 193, 0.1)', borderRadius: '8px' }}>
-                    <p style={{ margin: '5px 0', fontWeight: 'bold', color: '#4de2c1' }}>
-                      Room: {selectedLocation.roomInfo.room_name}
-                    </p>
-                    <p style={{ margin: '5px 0' }}>
-                      Room Number: {selectedLocation.roomInfo.room_number}
-                    </p>
-                    <p style={{ margin: '5px 0' }}>
-                      Floor: {selectedLocation.roomInfo.floor?.floor_name}
-                    </p>
-                  </div>
+                  <>
+                    <p><strong>Room:</strong> {selectedLocation.roomInfo.room_name}</p>
+                    <p><strong>Room No:</strong> {selectedLocation.roomInfo.room_number}</p>
+                    <p><strong>Floor:</strong> {selectedLocation.roomInfo.floor?.floor_name}</p>
+                  </>
                 )}
               </div>
             </Popup>
@@ -640,29 +631,7 @@ const InteractiveMap = ({ onClose }) => {
           </>
         )}
 
-        {/* Campus location markers - filtered by search */}
-        {filteredLocations.map((location) => (
-          <Marker
-            key={location.id}
-            position={location.position}
-            icon={createCampusIcon(location.color, location.type)}
-          >
-            <Popup>
-              <div className="location-popup">
-                <h4>{location.name}</h4>
-                <p>{location.description}</p>
-                <div className="facilities-list">
-                  <strong>Facilities:</strong>
-                  <ul>
-                    {location.facilities.map((facility, idx) => (
-                      <li key={idx}>{facility}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-            </Popup>
-          </Marker>
-        ))}
+        {/* Campus location markers removed */}
 
       </MapContainer>
 
@@ -674,15 +643,15 @@ const InteractiveMap = ({ onClose }) => {
 // Helper function to calculate distance between two points
 const getDistance = (lat1, lng1, lat2, lng2) => {
   const R = 6371e3; // Earth's radius in meters
-  const φ1 = lat1 * Math.PI/180;
-  const φ2 = lat2 * Math.PI/180;
-  const Δφ = (lat2-lat1) * Math.PI/180;
-  const Δλ = (lng2-lng1) * Math.PI/180;
+  const φ1 = lat1 * Math.PI / 180;
+  const φ2 = lat2 * Math.PI / 180;
+  const Δφ = (lat2 - lat1) * Math.PI / 180;
+  const Δλ = (lng2 - lng1) * Math.PI / 180;
 
-  const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
-          Math.cos(φ1) * Math.cos(φ2) *
-          Math.sin(Δλ/2) * Math.sin(Δλ/2);
-  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+  const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+    Math.cos(φ1) * Math.cos(φ2) *
+    Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
   return R * c;
 };

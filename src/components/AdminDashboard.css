@@ -49,6 +49,8 @@
   color: var(--text);
   font-weight: 600;
   cursor: pointer;
+  min-height: 44px;
+  font-family: inherit;
   transition: transform 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
@@ -74,7 +76,7 @@
 
 .welcome-card h1 {
   margin: 0 0 0.5rem 0;
-  font-size: 2rem;
+  font-size: clamp(1.4rem, 3vw + 0.5rem, 2rem);
   letter-spacing: -0.02em;
 }
 
@@ -162,13 +164,15 @@
 }
 
 .action-btn {
-  padding: 0.7rem 1.2rem;
+  padding: 0.85rem 1.2rem;
   border-radius: 10px;
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--text);
   font-weight: 600;
+  font-family: inherit;
   cursor: pointer;
+  min-height: 44px;
   transition: transform 0.2s ease, background 0.2s ease;
 }
 
@@ -180,11 +184,12 @@
 
 @media (max-width: 768px) {
   .dashboard-header {
-    padding: 1.2rem 6vw;
+    padding: 1rem 5vw;
+    min-height: 60px;
   }
 
   .dashboard-content {
-    padding: 2rem 6vw;
+    padding: 1.5rem 5vw;
   }
 
   .dashboard-grid {
@@ -197,5 +202,16 @@
 
   .action-btn {
     width: 100%;
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .welcome-card {
+    padding: 1.4rem;
+  }
+
+  .dash-card {
+    padding: 1.2rem;
   }
 }

@@ -42,7 +42,7 @@
 
 .login-header h1 {
   margin: 0;
-  font-size: 1.8rem;
+  font-size: clamp(1.35rem, 4vw + 0.5rem, 1.8rem);
   letter-spacing: -0.01em;
 }
 
@@ -103,7 +103,10 @@
   background: linear-gradient(120deg, var(--accent) 0%, var(--accent-strong) 100%);
   color: #051018;
   font-weight: 700;
+  font-family: inherit;
+  font-size: 1rem;
   cursor: pointer;
+  min-height: 48px;
   box-shadow: 0 15px 35px rgba(77, 226, 193, 0.25);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -150,5 +153,15 @@
     flex-direction: column;
     gap: 0.35rem;
     align-items: flex-start;
+  }
+}
+
+@media (max-width: 380px) {
+  .login-page {
+    padding: 1.25rem;
+  }
+
+  .login-card {
+    padding: 1.25rem 1rem;
   }
 }

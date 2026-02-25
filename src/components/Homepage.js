@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import './Homepage.css';
 
 const Homepage = () => {
+  const [menuOpen, setMenuOpen] = useState(false);
+
   const openMapPage = () => {
     window.location.href = '/map';
   };
@@ -9,6 +11,8 @@ const Homepage = () => {
   const openLoginPage = () => {
     window.location.href = '/login';
   };
+
+  const closeMenu = () => setMenuOpen(false);
 
   return (
     <div className="homepage">
@@ -19,8 +23,30 @@ const Homepage = () => {
           <a href="#about">About</a>
           <a href="#contact">Contact</a>
         </nav>
-        <button className="ghost-button" onClick={openLoginPage}>Admin Login</button>
+        <button className="ghost-button desktop-only" onClick={openLoginPage}>Admin Login</button>
+        <button
+          className="ham-btn"
+          onClick={() => setMenuOpen(o => !o)}
+          aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+          aria-expanded={menuOpen}
+        >
+          {menuOpen ? '✕' : '☰'}
+        </button>
       </header>
+
+      {/* Mobile nav drawer */}
+      {menuOpen && (
+        <div className="mobile-nav" onClick={closeMenu}>
+          <nav className="mobile-nav-inner" onClick={e => e.stopPropagation()}>
+            <a href="#home" onClick={closeMenu}>Home</a>
+            <a href="#about" onClick={closeMenu}>About</a>
+            <a href="#contact" onClick={closeMenu}>Contact</a>
+            <button className="ghost-button full-width-btn" onClick={() => { closeMenu(); openLoginPage(); }}>
+              Admin Login
+            </button>
+          </nav>
+        </div>
+      )}
 
       <section className="hero" id="home">
         <div className="background-orbs" aria-hidden="true">
@@ -101,17 +127,17 @@ const Homepage = () => {
         </div>
         <div className="feature-grid">
           <div className="feature-card">
-            <div className="icon-pill">//</div>
+            <div className="icon-pill">⚡</div>
             <h3>Live layers</h3>
             <p>Toggle shuttles, parking, and accessibility paths in one tap.</p>
           </div>
           <div className="feature-card">
-            <div className="icon-pill">[]</div>
+            <div className="icon-pill">🔍</div>
             <h3>Precision search</h3>
             <p>Find buildings, rooms, or services instantly with smart suggestions.</p>
           </div>
           <div className="feature-card">
-            <div className="icon-pill">-></div>
+            <div className="icon-pill">🗺️</div>
             <h3>Reliable reroutes</h3>
             <p>Automatic detour alerts keep you on the fastest track when conditions change.</p>
           </div>
@@ -140,6 +166,18 @@ const Homepage = () => {
           </div>
         </div>
       </footer>
+
+      {/* Mobile bottom bar */}
+      <div className="mobile-bar">
+        <button className="mobile-bar-btn primary" onClick={openMapPage}>
+          <span className="mobile-bar-icon">🗺️</span>
+          Open Map
+        </button>
+        <button className="mobile-bar-btn ghost" onClick={openLoginPage}>
+          <span className="mobile-bar-icon">🔐</span>
+          Admin
+        </button>
+      </div>
     </div>
   );
 };

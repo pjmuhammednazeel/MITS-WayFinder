@@ -138,7 +138,9 @@
   color: #0a0f1e;
   font-weight: 700;
   font-size: 1rem;
+  font-family: inherit;
   cursor: pointer;
+  min-height: 48px;
   transition: all 0.2s ease;
   margin-top: 0.5rem;
 }
@@ -146,6 +148,11 @@
 .submit-button:hover {
   transform: translateY(-2px);
   box-shadow: 0 10px 30px rgba(77, 226, 193, 0.3);
+}
+
+.submit-button:active {
+  transform: translateY(0);
+  box-shadow: none;
 }
 
 .submit-button:disabled {
@@ -255,5 +262,28 @@
 
   .rooms-grid {
     grid-template-columns: 1fr;
+  }
+
+  .submit-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .manage-rooms {
+    padding: 1.25rem 4vw;
+  }
+
+  .form-section {
+    padding: 1.25rem;
+  }
+
+  .page-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .delete-button {
+    width: 100%;
+    text-align: center;
   }
 }

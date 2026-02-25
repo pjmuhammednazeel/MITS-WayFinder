@@ -207,7 +207,10 @@
   background: linear-gradient(120deg, var(--accent) 0%, var(--accent-strong) 100%);
   color: #051018;
   font-weight: 700;
+  font-family: inherit;
+  font-size: 1rem;
   cursor: pointer;
+  min-height: 48px;
   box-shadow: 0 12px 30px rgba(77, 226, 193, 0.25);
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
@@ -273,6 +276,9 @@
   font-size: 0.85rem;
   color: var(--accent);
   margin-top: 0.5rem;
+  flex-wrap: wrap;
+  overflow-wrap: break-word;
+  word-break: break-all;
 }
 
 .delete-btn {
@@ -304,7 +310,7 @@
 
 @media (max-width: 540px) {
   .manage-buildings {
-    padding: 1.5rem 6vw;
+    padding: 1.5rem 4vw;
   }
 
   .mb-header {
@@ -313,7 +319,31 @@
     gap: 1rem;
   }
 
+  .mb-header h2 {
+    font-size: 1.5rem;
+  }
+
   .coords-grid {
     grid-template-columns: 1fr;
+  }
+
+  .primary-button {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .picker-map {
+    height: 280px;
+  }
+
+  .building-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .delete-btn {
+    width: 100%;
+    text-align: center;
   }
 }
